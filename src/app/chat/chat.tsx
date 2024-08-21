@@ -103,7 +103,7 @@ export function Chat() {
                     {m.role === "user" ? "User" : "LLM"}
                   </p>
                   {m.role === "user" ? (
-                    <p>{m.content}</p>
+                    <Markdown markdown={m.content} />
                   ) : (
                     <Markdown markdown={m.content} />
                   )}
