@@ -139,6 +139,7 @@ export function Chat() {
                 onKeyDown={handleKeyDown}
                 value={input}
                 onChange={handleInputChange}
+                autoFocus
               />
             </div>
 
