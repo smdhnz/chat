@@ -1,8 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, ChangeEvent } from "react";
-import { useRef, useEffect } from "react";
-import { useChat } from "ai/react";
+import { useRef, useEffect, useState, type KeyboardEvent } from "react";
 import {
   SettingsIcon,
   PaperclipIcon,
@@ -11,6 +9,8 @@ import {
   CircleUserIcon,
   SparklesIcon,
 } from "lucide-react";
+import OpenAI from "openai";
+import cuid from "cuid";
 
 import { useLocalStorage } from "@/lib/use-local-storage";
 import { Button } from "@/components/ui/button";
@@ -22,33 +22,73 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-import { checkAuth } from "./server-actions";
 import { Markdown } from "./markdown";
+
+type Message = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
 
 export function Chat() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [accessKey, setAccessKey] = useLocalStorage<string>("access_key", "");
-
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat();
+  const [apiKey, setApiKey] = useLocalStorage<string>("apiKey", "");
+  const [input, setInput] = useState<string>("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [openai, setOpenai] = useState<OpenAI | null>(null);
 
   async function handleSend() {
-    if (await checkAuth(accessKey)) {
-      handleSubmit();
+    if (isLoading || input.trim() === "" || !openai) return;
+
+    setIsLoading(true);
+
+    const newMessages: Message[] = [
+      ...messages,
+      {
+        id: cuid(),
+        role: "user",
+        content: input,
+      },
+      {
+        id: cuid(),
+        role: "assistant",
+        content: "",
+      },
+    ];
+
+    setInput("");
+    setMessages(newMessages);
+
+    const stream = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: newMessages.slice(0, -1),
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || "";
+
+      setMessages((prev) => {
+        return [
+          ...prev.slice(0, -1),
+          {
+            ...prev[prev.length - 1],
+            content: prev[prev.length - 1].content + content,
+          },
+        ];
+      });
     }
+
+    setIsLoading(false);
   }
 
   async function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (
-      event.ctrlKey &&
-      event.key === "Enter" &&
-      !isLoading &&
-      !(input.trim() === "")
-    ) {
+    if (event.ctrlKey && event.key === "Enter") {
       event.preventDefault();
-      await handleSend();
+      handleSend();
     }
   }
 
@@ -58,15 +98,15 @@ export function Chat() {
     }
   }
 
-  function handleAccessKeyChange(event: ChangeEvent<HTMLInputElement>) {
-    setAccessKey(event.target.value);
-  }
-
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "instant" });
     }
   }, [messages]);
+
+  useEffect(() => {
+    setOpenai(new OpenAI({ apiKey, dangerouslyAllowBrowser: true }));
+  }, [apiKey]);
 
   return (
     <div className="min-h-screen flex bg-[#212121] relative">
@@ -79,12 +119,12 @@ export function Chat() {
           </PopoverTrigger>
           <PopoverContent className="bg-[#212121] border-zinc-600">
             <div className="flex flex-col gap-4">
-              <Label>Access Key</Label>
+              <Label>API key</Label>
               <Input
                 className="bg-[#212121] border border-zinc-600"
                 type="password"
-                value={accessKey}
-                onChange={handleAccessKeyChange}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.currentTarget.value)}
               />
             </div>
           </PopoverContent>
@@ -114,44 +154,25 @@ export function Chat() {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="mx-auto max-w-[800px] w-full mb-8 bg-[#212121] px-3">
+        <div className="w-full flex flex-col items-center mb-8 px-4">
           <div
-            className="w-full flex border border-zinc-600 rounded-xl items-end p-3 gap-3 h-full cursor-text"
+            className="flex items-center rounded-xl border border-zinc-600 cursor-text max-w-[700px] w-full px-5 py-3"
             onClick={handleClickTextarea}
           >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              disabled={isLoading}
-            >
-              <PaperclipIcon />
-            </Button>
-
-            <div className="h-full flex items-center grow max-h-80 overflow-y-auto">
+            <div className="flex items-center max-h-[50vh] overflow-y-auto w-full">
               <textarea
                 ref={textareaRef}
                 placeholder="メッセージを入力"
                 rows={1}
-                className="resize-none bg-[#212121] w-full focus:outline-none"
+                className="resize-none bg-[#212121] focus:outline-none"
                 /* @ts-ignore */
                 style={{ fieldSizing: "content" }}
                 onKeyDown={handleKeyDown}
                 value={input}
-                onChange={handleInputChange}
+                onChange={(e) => setInput(e.currentTarget.value)}
                 autoFocus
               />
             </div>
-
-            <Button
-              variant="default"
-              size="icon"
-              className="h-8 w-8"
-              disabled={input.trim().length === 0 || isLoading}
-              onClick={handleSubmit}
-            >
-              {isLoading ? <LoaderIcon /> : <ArrowUpIcon />}
-            </Button>
           </div>
         </div>
       </div>
