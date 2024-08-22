@@ -1,3 +1,4 @@
+import * as React from "react";
 import Markdown_ from "markdown-to-jsx";
 
 type Props = {
@@ -75,16 +76,23 @@ export const Markdown = ({ markdown }: Props) => {
             },
           },
           pre: {
-            component: "pre",
-            props: {
-              className:
-                "overflow-x-auto my-5 p-6 bg-[#0D0D0D] text-white rounded-xl",
-            },
+            component: ({ children, ...props }) => (
+              <pre
+                {...props}
+                className="overflow-x-auto my-5 p-6 bg-[#0D0D0D] text-white rounded-xl"
+              >
+                {React.Children.map(children, (child) =>
+                  React.cloneElement(child, {
+                    className: "bg-[#0D0D0D] text-white",
+                  }),
+                )}
+              </pre>
+            ),
           },
           code: {
             component: "code",
             props: {
-              className: "bg-[#0D0D0D] text-white rounded",
+              className: "bg-[#0D0D0D] text-white rounded p-2",
             },
           },
         },
