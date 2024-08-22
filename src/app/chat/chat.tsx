@@ -1,14 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, type KeyboardEvent } from "react";
-import {
-  SettingsIcon,
-  PaperclipIcon,
-  ArrowUpIcon,
-  LoaderIcon,
-  CircleUserIcon,
-  SparklesIcon,
-} from "lucide-react";
+import { SettingsIcon, CircleUserIcon, SparklesIcon } from "lucide-react";
 import OpenAI from "openai";
 import cuid from "cuid";
 
@@ -156,7 +149,7 @@ export function Chat() {
 
         <div className="w-full flex flex-col items-center mb-8 px-4">
           <div
-            className="flex items-center rounded-xl border border-zinc-600 cursor-text max-w-[700px] w-full px-5 py-3"
+            className="flex items-center rounded-xl border border-zinc-600 cursor-text max-w-[700px] w-full px-5 py-4"
             onClick={handleClickTextarea}
           >
             <div className="flex items-center max-h-[50vh] overflow-y-auto w-full">
