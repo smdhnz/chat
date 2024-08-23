@@ -1,11 +1,17 @@
 import * as React from "react";
 import Markdown_ from "markdown-to-jsx";
+import { ClipboardIcon, ClipboardCheckIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   children: string;
 };
 
 export const Markdown = ({ children }: Props) => {
+  const handleCopy = (code: string) => {
+    navigator.clipboard.writeText(code);
+  };
+
   return (
     <Markdown_
       options={{
@@ -76,18 +82,42 @@ export const Markdown = ({ children }: Props) => {
             },
           },
           pre: {
-            component: ({ children, ...props }) => (
-              <pre
-                {...props}
-                className="overflow-x-auto my-5 p-6 bg-[#0D0D0D] text-white rounded-xl"
-              >
-                {React.Children.map(children, (child) =>
-                  React.cloneElement(child, {
-                    className: "bg-[#0D0D0D] text-white",
-                  }),
-                )}
-              </pre>
-            ),
+            component: ({ children, ...props }) => {
+              const code = React.Children.map(
+                children,
+                (child) => child.props.children,
+              ).join("\n");
+
+              const [isClick, setIsClick] = React.useState(false);
+
+              const handleClick = () => {
+                handleCopy(code);
+                setIsClick(true);
+              };
+
+              return (
+                <div className="relative">
+                  <Button
+                    onClick={handleClick}
+                    className="absolute top-2 right-2"
+                    size="icon"
+                    variant="ghost"
+                  >
+                    {isClick ? <ClipboardCheckIcon /> : <ClipboardIcon />}
+                  </Button>
+                  <pre
+                    {...props}
+                    className="overflow-x-auto my-5 p-6 bg-[#0D0D0D] text-white rounded-xl"
+                  >
+                    {React.Children.map(children, (child) =>
+                      React.cloneElement(child, {
+                        className: "bg-[#0D0D0D] text-white",
+                      }),
+                    )}
+                  </pre>
+                </div>
+              );
+            },
           },
           code: {
             component: "code",
