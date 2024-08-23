@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useEffect, useState, type KeyboardEvent } from "react";
-import { SettingsIcon, CircleUserIcon, SparklesIcon } from "lucide-react";
+import { SettingsIcon, CircleUserIcon, BotIcon } from "lucide-react";
 import OpenAI from "openai";
 import cuid from "cuid";
 
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { codeBlockParse } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,11 +66,13 @@ export function Chat() {
       const content = chunk.choices[0]?.delta?.content || "";
 
       setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+
         return [
           ...prev.slice(0, -1),
           {
-            ...prev[prev.length - 1],
-            content: prev[prev.length - 1].content + content,
+            ...lastMessage,
+            content: lastMessage.content + content,
           },
         ];
       });
@@ -129,16 +132,16 @@ export function Chat() {
             <div key={m.id} className="px-4 py-4">
               <div className="flex flex-1 gap-3 mx-auto max-w-[800px] px-5">
                 <div className="relative">
-                  {m.role === "user" ? <CircleUserIcon /> : <SparklesIcon />}
+                  {m.role === "user" ? <CircleUserIcon /> : <BotIcon />}
                 </div>
                 <div className="relative flex flex-col w-11/12">
                   <p className="font-bold">
-                    {m.role === "user" ? "User" : "LLM"}
+                    {m.role === "user" ? "User" : "AI"}
                   </p>
                   {m.role === "user" ? (
-                    <Markdown markdown={m.content} />
+                    <div className="whitespace-break-spaces">{m.content}</div>
                   ) : (
-                    <Markdown markdown={m.content} />
+                    <Markdown>{codeBlockParse(m.content)}</Markdown>
                   )}
                 </div>
               </div>
