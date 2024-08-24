@@ -152,15 +152,15 @@ export function Chat() {
 
         <div className="w-full flex flex-col items-center mb-8 px-4">
           <div
-            className="flex items-center rounded-xl border border-zinc-600 cursor-text max-w-[700px] w-full px-5 py-4"
+            className="rounded-xl border border-zinc-600 cursor-text max-w-[700px] w-full px-5 py-4"
             onClick={handleClickTextarea}
           >
-            <div className="flex items-center max-h-[50vh] overflow-y-auto w-full">
+            <div className="max-h-[50vh] overflow-y-auto w-full mb-[-5px]">
               <textarea
                 ref={textareaRef}
                 placeholder="メッセージを入力"
                 rows={1}
-                className="resize-none bg-[#212121] focus:outline-none"
+                className="resize-none bg-[#212121] focus:outline-none w-full"
                 /* @ts-ignore */
                 style={{ fieldSizing: "content" }}
                 onKeyDown={handleKeyDown}
