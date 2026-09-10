@@ -19,12 +19,12 @@ test("SSH用スクリプトはユーザーの閲覧範囲だけを一覧・会�
     const path = join(directory, "chat.sqlite");
     const db = new Database(path);
     db.exec(`
-      CREATE TABLE users (id TEXT, username TEXT);
+      CREATE TABLE users (id TEXT, username TEXT, display_name TEXT);
       CREATE TABLE projects (id TEXT, user_id TEXT);
       CREATE TABLE project_members (project_id TEXT, user_id TEXT);
       CREATE TABLE conversations (id TEXT, title TEXT, user_id TEXT, project_id TEXT, temporary INTEGER, updated_at TEXT);
       CREATE TABLE conversation_entries (conversation_id TEXT, sequence INTEGER, kind TEXT, payload_json TEXT, created_at TEXT);
-      INSERT INTO users VALUES ('1', 'reader'), ('2', 'other'), ('3', 'duplicate'), ('4', 'duplicate'), ('5', 'empty');
+      INSERT INTO users VALUES ('1', 'account-reader', 'reader'), ('2', 'other', 'other'), ('3', 'duplicate-a', 'duplicate'), ('4', 'duplicate-b', 'duplicate'), ('5', 'empty', 'empty');
       INSERT INTO projects VALUES ('shared', '2'), ('own', '1'), ('private', '2');
       INSERT INTO project_members VALUES ('shared', '1');
       INSERT INTO conversations VALUES
@@ -85,9 +85,13 @@ test("SSH用スクリプトはユーザーの閲覧範囲だけを一覧・会�
     ).toEqual(["shared-chat", "my-temp", "own-project", "personal"]);
     expect(list.stdout).toContain("2026-01-02 09:00\t改行 タイトル");
     expect(run(["1"]).stdout).toBe(list.stdout);
+    expect(run(["account-reader"]).status).not.toBe(0);
+    expect(run(["missing"]).stderr).toContain("見つかりません");
+    expect(run(["duplicate"]).stderr).toContain("複数います");
+    expect(run(["3"]).status).toBe(0);
     const detail = run(["reader", "shared-chat"]);
     expect(detail.status).toBe(0);
-    expect(detail.stdout).toContain("ユーザー: reader\n質問\n続き\n［添付画像: 1件］");
+    expect(detail.stdout).toContain("ユーザー: account-reader\n質問\n続き\n［添付画像: 1件］");
     expect(detail.stdout).toContain("AI\nこんにちは");
     expect(detail.stdout.indexOf("質問")).toBeLessThan(detail.stdout.indexOf("こんにちは"));
     expect(detail.stdout).not.toMatch(/秘密の推論|内部結果|internal|本文なし/);

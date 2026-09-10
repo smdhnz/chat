@@ -2,7 +2,7 @@
 # 一覧: ./scripts/chat.sh USER / 会話: ./scripts/chat.sh USER CHAT_ID
 set -eu
 if [ "$#" -lt 1 ] || [ "$#" -gt 2 ] || [ -z "$1" ] || { [ "$#" -eq 2 ] && [ -z "$2" ]; }; then
-  echo "使い方: $0 ユーザー名またはDiscordユーザーID [チャットID]" >&2
+  echo "使い方: $0 表示名またはDiscordユーザーID [チャットID]" >&2
   exit 2
 fi
 cd -- "$(dirname -- "$0")/.."
@@ -23,10 +23,12 @@ def main():
         db.execute("BEGIN")
         db.row_factory = sqlite3.Row
         users = db.execute(
-            "SELECT id FROM users WHERE id = ? OR username = ?", (user, user)
+            "SELECT id FROM users WHERE id = ? OR display_name = ?", (user, user)
         ).fetchall()
-        if len(users) != 1:
-            sys.exit("ユーザーが見つからないか、候補が複数あります。DiscordユーザーIDで指定してください。")
+        if not users:
+            sys.exit("指定した表示名またはDiscordユーザーIDのユーザーが見つかりません。")
+        if len(users) > 1:
+            sys.exit("同じ表示名のユーザーが複数います。DiscordユーザーIDで指定してください。")
         chats = db.execute("""
             SELECT c.id, c.title,
                 strftime('%Y-%m-%d %H:%M', c.updated_at, '+9 hours') AS updated_at

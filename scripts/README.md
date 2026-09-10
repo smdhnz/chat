@@ -3,11 +3,11 @@
 本番ホストにSSH接続して実行します。1本のスクリプトで一覧・詳細を切り替えます。
 
 ```sh
-# 一覧（更新日時の新しい順）。ユーザー名はDiscordのusernameと完全一致。
-/path/to/ai-chat/scripts/chat.sh USERNAME
+# 一覧（更新日時の新しい順）。表示名はdisplay_nameと完全一致。
+/path/to/ai-chat/scripts/chat.sh 'DISPLAY_NAME'
 
-# 会話のやり取り。ユーザー名の代わりにDiscordユーザーIDも指定可能。
-/path/to/ai-chat/scripts/chat.sh USERNAME CHAT_ID
+# 会話のやり取り。表示名の代わりにDiscordユーザーIDも指定可能。
+/path/to/ai-chat/scripts/chat.sh 'DISPLAY_NAME' CHAT_ID
 ```
 
 必要条件: 本番のチェックアウト、稼働中のCompose `chat` サービス、SSHユーザーのDocker実行権限。ホスト側のPython・jqは不要です。スクリプト自身がプロジェクトルートに移動するため、SSHの開始ディレクトリは問いません。
@@ -17,10 +17,10 @@
 1. **SSH経由でスクリプトを実行**: 本番ホスト・SSHユーザー・鍵を設定し、上記の一覧コマンドを指定する。
 2. **テキストを分割**: SSHの出力を「改行」で分割する。空出力ならチャットがないため終了する。
 3. **リストから選択**: 分割した行から1件選ぶ（複数選択はオフ）。行は `チャットID<TAB>更新日時（日本時間）<TAB>タイトル`。タイトルが同じでもIDで区別できる。
-4. **テキストを照合**: 選択した行から正規表現 `^[a-zA-Z0-9_-]+` でIDだけを取得する。照合結果がなければ終了し、2回目の **SSH経由でスクリプトを実行** に `/path/to/ai-chat/scripts/chat.sh USERNAME '照合結果の変数'` を設定する。タイトルや選択行全体をコマンドへ埋め込まない。
+4. **テキストを照合**: 選択した行から正規表現 `^[a-zA-Z0-9_-]+` でIDだけを取得する。照合結果がなければ終了し、2回目の **SSH経由でスクリプトを実行** に `/path/to/ai-chat/scripts/chat.sh 'DISPLAY_NAME' '照合結果の変数'` を設定する。タイトルや選択行全体をコマンドへ埋め込まない。
 5. **クイックルック**: 2回目のSSH出力を表示する。
 
-`/path/to/ai-chat` は本番の配置先、`USERNAME` は両方のSSHアクションで同じユーザー名またはDiscordユーザーIDに置き換えてください。表示名（display_name）は検索しません。名前が重複した場合はIDを使用します。
+`/path/to/ai-chat` は本番の配置先、`DISPLAY_NAME` は両方のSSHアクションで同じ表示名（display_name）またはDiscordユーザーIDに置き換えてください。usernameは検索しません。表示名が重複する場合やシングルクォートを含む場合はIDを使用します。
 
 ## 出力・安全性
 
